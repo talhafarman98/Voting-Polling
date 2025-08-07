@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Create Poll | Voting System</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      display: flex;
+      background: linear-gradient(145deg, #e0eafc, #cfdef3);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 250px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      padding: 30px 20px;
+      box-shadow: 5px 0 20px rgba(0,0,0,0.1);
+    }
+
+    .sidebar h2 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+    }
+
+    .sidebar a {
+      display: block;
+      padding: 12px 20px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      text-decoration: none;
+      color: #333;
+      background: rgba(255, 255, 255, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .sidebar a:hover {
+      background: #667eea;
+      color: #fff;
+      transform: translateX(5px);
+    }
+
+    .main {
+      flex: 1;
+      padding: 40px;
+      overflow-y: auto;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    .form-card {
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      max-width: 700px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+    }
+
+    .candidate-container {
+      margin-top: 20px;
+    }
+
+    .candidate-container input {
+      margin-bottom: 10px;
+    }
+
+    button {
+      padding: 12px 20px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-weight: bold;
+      margin-top: 15px;
+      cursor: pointer;
+    }
+
+    .success, .error {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    .success { color: green; }
+    .error { color: red; }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        display: none;
+      }
+      .main {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <h2>Admin Panel</h2>
+    <a href="admin-panel.html">📊 Dashboard</a>
+    <a href="add-voter.html">➕ Add Voter</a>
+    <a href="voter.html">🧑‍🤝‍🧑 Voters</a>
+    <a href="create-poll.html">🗳️ Create Poll</a>
+    <a href="active-polls.html">🔥 Active Polls</a>
+    <a href="results.html">📈 Results</a>
+    <a href="finished-polls.html">✅ Finished Polls</a>
+  </div>
+
+  <div class="main">
+    <h1>Create New Poll</h1>
+    <div class="form-card">
+      <input type="text" id="pollName" placeholder="Poll Name" required />
+      <input type="date" id="pollDate" placeholder="Date" required />
+      <input type="text" id="organizer" placeholder="Organizer Name" />
+      <textarea id="reason" placeholder="Reason / Description"></textarea>
+
+      <div class="candidate-container" id="candidateContainer">
+        <input type="text" class="candidate-input" placeholder="Candidate 1" />
+        <input type="text" class="candidate-input" placeholder="Candidate 2" />
+      </div>
+      <button onclick="addCandidate()">➕ Add Another Candidate</button>
+      <button onclick="submitPoll()">✅ Create Poll</button>
+      <div id="message"></div>
+    </div>
+  </div>
+
+  <script>
+    const supabase = window.supabase.createClient(
+      "https://lyqhwhrafbjjswsxyedf.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cWh3aHJhZmJqanN3c3h5ZWRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3MDI5NDIsImV4cCI6MjA2OTI3ODk0Mn0.FEqBMQ4aUSBDoQwBm5l1_8yfv3mizhOytQVtV3DlID0"
+    );
+
+    function addCandidate() {
+      const container = document.getElementById("candidateContainer");
+      const inputCount = container.querySelectorAll("input").length;
+      const input = document.createElement("input");
+      input.type = "text";
+      input.className = "candidate-input";
+      input.placeholder = `Candidate ${inputCount + 1}`;
+      container.appendChild(input);
+    }
+
+    async function submitPoll() {
+      const name = document.getElementById("pollName").value.trim();
+      const date = document.getElementById("pollDate").value;
+      const organizer = document.getElementById("organizer").value.trim();
+      const reason = document.getElementById("reason").value.trim();
+
+      const candidateInputs = document.querySelectorAll(".candidate-input");
+      const candidates = [];
+      const votes = {};
+
+      candidateInputs.forEach(input => {
+        const value = input.value.trim();
+        if (value) {
+          candidates.push(value);
+          votes[value] = 0;
+        }
+      });
+
+      if (!name || !date || candidates.length < 2) {
+        document.getElementById("message").innerHTML = `<div class="error">Poll Name, Date, and at least 2 candidates are required.</div>`;
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("polls")
+        .insert([{ name, date, organizer, reason, candidates, votes }]);
+
+      if (error) {
+        document.getElementById("message").innerHTML = `<div class="error">${error.message}</div>`;
+      } else {
+        document.getElementById("message").innerHTML = `<div class="success">Poll created successfully!</div>`;
+        document.getElementById("pollName").value = "";
+        document.getElementById("pollDate").value = "";
+        document.getElementById("organizer").value = "";
+        document.getElementById("reason").value = "";
+        candidateInputs.forEach(input => input.remove());
+        addCandidate(); addCandidate(); // reset 2 default
+      }
+    }
+  </script>
+
+</body>
+</html>

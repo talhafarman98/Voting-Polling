@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Add Voter | Voting System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      display: flex;
+      background: linear-gradient(145deg, #e0eafc, #cfdef3);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 250px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      padding: 30px 20px;
+      box-shadow: 5px 0 20px rgba(0,0,0,0.1);
+    }
+
+    .sidebar h2 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+    }
+
+    .sidebar a {
+      display: block;
+      padding: 12px 20px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      text-decoration: none;
+      color: #333;
+      background: rgba(255, 255, 255, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .sidebar a:hover {
+      background: #667eea;
+      color: #fff;
+      transform: translateX(5px);
+    }
+
+    .main {
+      flex: 1;
+      padding: 40px;
+      overflow-y: auto;
+    }
+
+    h1 {
+      margin-bottom: 30px;
+    }
+
+    .form-card {
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      max-width: 600px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-5px); }
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      border: none;
+      color: white;
+      font-weight: bold;
+      border-radius: 10px;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+
+    .success, .error {
+      margin-top: 15px;
+      text-align: center;
+      font-weight: bold;
+    }
+
+    .success { color: green; }
+    .error { color: red; }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        display: none;
+      }
+
+      body {
+        flex-direction: column;
+      }
+
+      .main {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <h2>Admin Panel</h2>
+    <a href="admin-panel.html">📊 Dashboard</a>
+    <a href="add-voter.html">➕ Add Voter</a>
+    <a href="voter.html">🧑‍🤝‍🧑 Voters</a>
+    <a href="create-poll.html">🗳️ Create Poll</a>
+    <a href="active-polls.html">🔥 Active Polls</a>
+    <a href="results.html">📈 Results</a>
+    <a href="finished-polls.html">✅ Finished Polls</a>
+  </div>
+
+  <div class="main">
+    <h1>Add New Voter</h1>
+    <div class="form-card">
+      <input type="text" id="name" placeholder="Full Name" required />
+      <input type="text" id="class" placeholder="Class" required />
+      <input type="email" id="email" placeholder="Email" required />
+      <input type="password" id="password" placeholder="Password" required />
+      <input type="text" id="phone" placeholder="Phone Number" required />
+      <button id="addButton">Add Voter</button>
+      <div id="message"></div>
+    </div>
+  </div>
+
+  <!-- Load Supabase JS -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+
+  <!-- Initialize and handle logic AFTER library is loaded -->
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const supabase = window.supabase.createClient(
+        "https://lyqhwhrafbjjswsxyedf.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cWh3aHJhZmJqanN3c3h5ZWRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3MDI5NDIsImV4cCI6MjA2OTI3ODk0Mn0.FEqBMQ4aUSBDoQwBm5l1_8yfv3mizhOytQVtV3DlID0"
+      );
+
+      document.getElementById("addButton").addEventListener("click", async function () {
+        const name = document.getElementById("name").value.trim();
+        const className = document.getElementById("class").value.trim();
+        const email = document.getElementById("email").value.trim();
+        const password = document.getElementById("password").value.trim();
+        const phone = document.getElementById("phone").value.trim();
+        const message = document.getElementById("message");
+
+        message.innerHTML = ""; // reset
+
+        if (!name || !className || !email || !password || !phone) {
+          message.innerHTML = `<div class="error">All fields are required.</div>`;
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from("voters")
+          .insert([
+            {
+              name: name,
+              class: className,
+              email: email,
+              password: password,
+              phone: phone
+            }
+          ]);
+
+        if (error) {
+          message.innerHTML = `<div class="error">Error: ${error.message}</div>`;
+        } else {
+          message.innerHTML = `<div class="success">Voter added successfully!</div>`;
+          document.getElementById("name").value = "";
+          document.getElementById("class").value = "";
+          document.getElementById("email").value = "";
+          document.getElementById("password").value = "";
+          document.getElementById("phone").value = "";
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>

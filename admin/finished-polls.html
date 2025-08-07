@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Finished Polls | Voting System</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      display: flex;
+      background: linear-gradient(145deg, #e0eafc, #cfdef3);
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 250px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      padding: 30px 20px;
+      box-shadow: 5px 0 20px rgba(0,0,0,0.1);
+    }
+
+    .sidebar h2 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+    }
+
+    .sidebar a {
+      display: block;
+      padding: 12px 20px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      text-decoration: none;
+      color: #333;
+      background: rgba(255, 255, 255, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .sidebar a:hover {
+      background: #667eea;
+      color: #fff;
+      transform: translateX(5px);
+    }
+
+    .main {
+      flex: 1;
+      padding: 40px;
+      overflow-y: auto;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+    }
+
+    .poll-card {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(12px);
+      padding: 30px;
+      border-radius: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+
+    .poll-header {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    .candidate {
+      margin-bottom: 10px;
+    }
+
+    .votes-label {
+      font-size: 15px;
+      color: #333;
+    }
+
+    .summary {
+      margin-top: 10px;
+      font-weight: bold;
+      font-size: 15px;
+      color: #2c3e50;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        display: none;
+      }
+      .main {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <h2>Admin Panel</h2>
+    <a href="admin-panel.html">📊 Dashboard</a>
+    <a href="add-voter.html">➕ Add Voter</a>
+    <a href="voter.html">🧑‍🤝‍🧑 Voters</a>
+    <a href="create-poll.html">🗳️ Create Poll</a>
+    <a href="active-polls.html">🔥 Active Polls</a>
+    <a href="results.html">📈 Results</a>
+    <a href="finished-polls.html">✅ Finished Polls</a>
+  </div>
+
+  <div class="main">
+    <h1>Finished Polls</h1>
+    <div id="pollsContainer">Loading finished polls...</div>
+  </div>
+
+  <script>
+    const supabase = window.supabase.createClient(
+      "https://lyqhwhrafbjjswsxyedf.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cWh3aHJhZmJqanN3c3h5ZWRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3MDI5NDIsImV4cCI6MjA2OTI3ODk0Mn0.FEqBMQ4aUSBDoQwBm5l1_8yfv3mizhOytQVtV3DlID0"
+    );
+
+    async function fetchFinishedPolls() {
+      const { data, error } = await supabase.from("polls").select("*").order('date', { ascending: false });
+      const container = document.getElementById("pollsContainer");
+      container.innerHTML = "";
+
+      if (error || !data || data.length === 0) {
+        container.innerHTML = "<p>No finished polls found.</p>";
+        return;
+      }
+
+      data.filter(p => p.winner).forEach(poll => {
+        const totalVotes = Object.values(poll.votes || {}).reduce((a, b) => a + b, 0) || 0;
+
+        const card = document.createElement("div");
+        card.className = "poll-card";
+
+        card.innerHTML = `
+          <div class="poll-header">${poll.name}</div>
+          <div class="organizer"><strong>Organizer:</strong> ${poll.organizer || "N/A"}</div>
+          <div style="margin-top: 10px;">
+            ${poll.candidates.map(candidate => {
+              const voteCount = poll.votes?.[candidate] || 0;
+              return `<div class="candidate">
+                        <div class="votes-label">${candidate}: ${voteCount} / ${totalVotes} votes</div>
+                      </div>`;
+            }).join("")}
+          </div>
+          <div class="summary">Total Votes: ${totalVotes}</div>
+          <div class="summary">🏆 Winner: ${poll.winner}</div>
+        `;
+
+        container.appendChild(card);
+      });
+    }
+
+    fetchFinishedPolls();
+  </script>
+
+</body>
+</html>
