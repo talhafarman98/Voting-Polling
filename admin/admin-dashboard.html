@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard | Voting System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      background: linear-gradient(145deg, #e0eafc, #cfdef3);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 250px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      box-shadow: 5px 0 20px rgba(0,0,0,0.1);
+      padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      border-right: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .sidebar h2 {
+      color: #333;
+      font-size: 24px;
+      margin-bottom: 30px;
+      text-align: center;
+    }
+
+    .sidebar a {
+      text-decoration: none;
+      color: #333;
+      padding: 12px 20px;
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.3);
+      transition: 0.3s ease;
+    }
+
+    .sidebar a:hover {
+      background: #667eea;
+      color: white;
+      transform: translateX(5px);
+    }
+
+    .main {
+      flex: 1;
+      padding: 40px;
+      overflow-y: auto;
+      animation: fadeIn 0.7s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 30px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      transition: 0.4s ease;
+      transform: perspective(600px) rotateX(0deg);
+    }
+
+    .card:hover {
+      transform: perspective(600px) rotateX(5deg);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    }
+
+    .card h3 {
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .card p {
+      color: #666;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        display: none;
+      }
+
+      body {
+        flex-direction: column;
+      }
+
+      .main {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <h2>Admin Panel</h2>
+    <a href="admin-panel.html">📊 Dashboard</a>
+    <a href="add-voter.html">➕ Add Voter</a>
+    <a href="voter.html">🧑‍🤝‍🧑 Voters</a>
+    <a href="create-poll.html">🗳️ Create Poll</a>
+    <a href="active-polls.html">🔥 Active Polls</a>
+    <a href="results.html">📈 Results</a>
+    <a href="finished-polls.html">✅ Finished Polls</a>
+  </div>
+
+  <div class="main">
+    <h1 style="margin-bottom: 30px;">Welcome, Admin 👋</h1>
+    <div class="cards">
+      <div class="card">
+        <h3>Total Voters</h3>
+        <p>+150 Registered</p>
+      </div>
+      <div class="card">
+        <h3>Active Polls</h3>
+        <p>3 Running Polls</p>
+      </div>
+      <div class="card">
+        <h3>Polls Created</h3>
+        <p>24 Total</p>
+      </div>
+      <div class="card">
+        <h3>Results Published</h3>
+        <p>21 Finalized</p>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
