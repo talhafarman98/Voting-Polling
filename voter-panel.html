@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Voter Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      display: flex;
+      height: 100vh;
+      background: linear-gradient(145deg, #e0eafc, #cfdef3);
+    }
+
+    .sidebar {
+      width: 250px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      padding: 30px 20px;
+      box-shadow: 5px 0 20px rgba(0,0,0,0.1);
+    }
+
+    .sidebar h2 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+    }
+
+    .sidebar a {
+      display: block;
+      padding: 12px 20px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      text-decoration: none;
+      color: #333;
+      background: rgba(255, 255, 255, 0.3);
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+
+    .sidebar a:hover {
+      background: #667eea;
+      color: #fff;
+      transform: translateX(5px);
+    }
+
+    .main {
+      flex: 1;
+      padding: 40px;
+      overflow-y: auto;
+    }
+
+    .welcome {
+      font-size: 26px;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+
+    .card {
+      margin-top: 30px;
+      background: rgba(255, 255, 255, 0.2);
+      padding: 30px;
+      border-radius: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      backdrop-filter: blur(8px);
+      color: #333;
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        display: none;
+      }
+      .main {
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar">
+    <h2>Voter Panel</h2>
+    <a href="vote.html">🗳️ Vote</a>
+    <a href="results.html">📈 Results</a>
+    <a href="#">👤 Profile</a>
+  </div>
+
+  <div class="main">
+    <div class="welcome" id="welcomeMessage">Welcome, Voter</div>
+    <div class="card">
+      <p>This is your personalized voter dashboard. Here you will be able to:</p>
+      <ul>
+        <li>🔘 Vote in active polls</li>
+        <li>📊 View live and past results</li>
+        <li>📝 Manage your profile info</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ✅ Supabase module logic -->
+  <script type="module">
+    import { supabase } from './supabaseClient.js';
+
+    const voterEmail = localStorage.getItem("voterEmail");
+    const welcomeBox = document.getElementById("welcomeMessage");
+
+    if (!voterEmail) {
+      alert("Unauthorized access. Please login first.");
+      window.location.href = "voter-login.html";
+    } else {
+      const { data, error } = await supabase
+        .from("voters")
+        .select("name")
+        .eq("email", voterEmail)
+        .single();
+
+      if (error || !data) {
+        welcomeBox.textContent = "Welcome, Voter";
+      } else {
+        welcomeBox.textContent = `Welcome, ${data.name}`;
+      }
+    }
+  </script>
+</body>
+</html>

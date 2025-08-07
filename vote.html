@@ -1,0 +1,237 @@
+<!-- vote.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vote | Voter Panel</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    /* same styling as before (sidebar, main area, modal etc) */
+    * {
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+    body {
+      margin: 0;
+      display: flex;
+      background: linear-gradient(145deg, #e0eafc, #cfdef3);
+      height: 100vh;
+      overflow: hidden;
+    }
+    .sidebar {
+      width: 250px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      padding: 30px 20px;
+      box-shadow: 5px 0 20px rgba(0,0,0,0.1);
+    }
+    .sidebar h2 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+    }
+    .sidebar a {
+      display: block;
+      padding: 12px 20px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      text-decoration: none;
+      color: #333;
+      background: rgba(255, 255, 255, 0.3);
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+    .sidebar a:hover {
+      background: #667eea;
+      color: #fff;
+      transform: translateX(5px);
+    }
+    .main {
+      flex: 1;
+      padding: 40px;
+      overflow-y: auto;
+    }
+    .poll-card {
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .candidate {
+      margin-bottom: 15px;
+    }
+    .bar-container {
+      width: 100%;
+      background: #eee;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .bar {
+      background: #2ecc71;
+      height: 20px;
+      transition: width 0.5s ease;
+    }
+    .btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      color: white;
+      background: #2ecc71;
+      cursor: pointer;
+      margin-top: 20px;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: white;
+      padding: 30px;
+      border-radius: 20px;
+      max-width: 400px;
+      width: 90%;
+    }
+    .modal button {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h2>Voter Panel</h2>
+    <a href="vote.html">🗳️ Vote</a>
+    <a href="results.html">📈 Results</a>
+    <a href="voter-panel.html">👤 Profile</a>
+  </div>
+
+  <div class="main">
+    <h1>Vote in Active Polls</h1>
+    <div id="pollsContainer">Loading...</div>
+  </div>
+
+  <div class="modal" id="voteModal">
+    <div class="modal-content">
+      <h3>Select a Candidate</h3>
+      <div id="candidateOptions"></div>
+      <button onclick="confirmVote()">Confirm</button>
+      <button onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+
+  <script>
+    const supabase = window.supabase.createClient(
+      "https://lyqhwhrafbjjswsxyedf.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cWh3aHJhZmJqanN3c3h5ZWRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3MDI5NDIsImV4cCI6MjA2OTI3ODk0Mn0.FEqBMQ4aUSBDoQwBm5l1_8yfv3mizhOytQVtV3DlID0"
+    );
+
+    let selectedPoll = null;
+    let selectedCandidate = null;
+
+    async function loadPolls() {
+      const { data, error } = await supabase
+        .from("polls")
+        .select("*")
+        .is("winner", null)
+        .order("date", { ascending: true });
+
+      const container = document.getElementById("pollsContainer");
+      container.innerHTML = "";
+
+      if (error) {
+        container.textContent = "Failed to load polls.";
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        container.textContent = "No active polls available.";
+        return;
+      }
+
+      data.forEach(poll => {
+        const totalVotes = Object.values(poll.votes || {}).reduce((a,b) => a + b, 0) || 1;
+        const card = document.createElement("div");
+        card.className = "poll-card";
+        card.innerHTML = `
+          <h3>${poll.name}</h3>
+          <p>Organizer: ${poll.organizer}</p>
+          ${poll.candidates.map(c => {
+            const v = poll.votes?.[c] || 0;
+            const pct = ((v / totalVotes) * 100).toFixed(1);
+            return `
+              <div class="candidate">
+                <div>${c} (${v} votes)</div>
+                <div class="bar-container"><div class="bar" style="width: ${pct}%"></div></div>
+              </div>`;
+          }).join('')}
+          <button class="btn" onclick='openModal(${JSON.stringify(poll)})'>Vote</button>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function openModal(poll) {
+      selectedPoll = poll;
+      selectedCandidate = null;
+      const modal = document.getElementById("voteModal");
+      const options = document.getElementById("candidateOptions");
+      options.innerHTML = poll.candidates.map(c => 
+        `<label><input type="radio" name="vote" value="${c}" onchange="selectedCandidate='${c}'"> ${c}</label><br>`
+      ).join('');
+      modal.style.display = "flex";
+    }
+
+    function closeModal() {
+      document.getElementById("voteModal").style.display = "none";
+    }
+
+    async function confirmVote() {
+      const email = localStorage.getItem("voterEmail");
+      if (!email) {
+        alert("Session expired. Please log in again.");
+        return window.location.href = "voter-login.html";
+      }
+
+      if (!selectedCandidate || !selectedPoll) {
+        return alert("Please select a candidate.");
+      }
+
+      const votedEmails = selectedPoll.voted_emails || [];
+      if (votedEmails.includes(email)) {
+        alert("You cannot vote again.");
+        closeModal();
+        return;
+      }
+
+      const updatedVotes = selectedPoll.votes || {};
+      updatedVotes[selectedCandidate] = (updatedVotes[selectedCandidate] || 0) + 1;
+      votedEmails.push(email);
+
+      const { error } = await supabase
+        .from("polls")
+        .update({
+          votes: updatedVotes,
+          voted_emails: votedEmails
+        })
+        .eq("id", selectedPoll.id);
+
+      if (error) {
+        alert("Vote failed to submit.");
+      } else {
+        alert("Vote submitted successfully!");
+        closeModal();
+        loadPolls();
+      }
+    }
+
+    loadPolls();
+  </script>
+</body>
+</html>

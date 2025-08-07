@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Results | Voter Panel</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: 'Poppins', sans-serif;
+    }
+    body {
+      margin: 0;
+      display: flex;
+      background: linear-gradient(145deg, #e0eafc, #cfdef3);
+      height: 100vh;
+      overflow: hidden;
+    }
+    .sidebar {
+      width: 250px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      padding: 30px 20px;
+      box-shadow: 5px 0 20px rgba(0,0,0,0.1);
+    }
+    .sidebar h2 {
+      text-align: center;
+      color: #333;
+      margin-bottom: 30px;
+    }
+    .sidebar a {
+      display: block;
+      padding: 12px 20px;
+      margin-bottom: 10px;
+      border-radius: 10px;
+      text-decoration: none;
+      color: #333;
+      background: rgba(255, 255, 255, 0.3);
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+    .sidebar a:hover {
+      background: #667eea;
+      color: #fff;
+      transform: translateX(5px);
+    }
+    .main {
+      flex: 1;
+      padding: 40px;
+      overflow-y: auto;
+    }
+    .poll-card {
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(12px);
+      padding: 30px;
+      border-radius: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .candidate {
+      margin-bottom: 15px;
+    }
+    .bar-container {
+      width: 100%;
+      background: #eee;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .bar {
+      background: #3498db;
+      height: 20px;
+      transition: width 0.5s ease;
+    }
+    .highlight {
+      background: #2ecc71;
+      color: white;
+      padding: 6px 12px;
+      border-radius: 10px;
+      display: inline-block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h2>Voter Panel</h2>
+    <a href="vote.html">🗳️ Vote</a>
+    <a href="results.html">📈 Results</a>
+    <a href="voter-panel.html">👤 Profile</a>
+  </div>
+
+  <div class="main">
+    <h1>Completed Poll Results</h1>
+    <div id="resultsContainer">Loading...</div>
+  </div>
+
+  <script>
+    const supabase = window.supabase.createClient(
+      "https://lyqhwhrafbjjswsxyedf.supabase.co",
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx5cWh3aHJhZmJqanN3c3h5ZWRmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM3MDI5NDIsImV4cCI6MjA2OTI3ODk0Mn0.FEqBMQ4aUSBDoQwBm5l1_8yfv3mizhOytQVtV3DlID0"
+    );
+
+    async function loadResults() {
+      const container = document.getElementById("resultsContainer");
+      const { data, error } = await supabase
+        .from("polls")
+        .select("*")
+        .not("winner", "is", null)
+        .order("date", { ascending: false });
+
+      container.innerHTML = "";
+
+      if (error || !data || data.length === 0) {
+        container.innerHTML = "<p>No completed polls yet.</p>";
+        return;
+      }
+
+      data.forEach(poll => {
+        const totalVotes = Object.values(poll.votes || {}).reduce((a,b) => a + b, 0) || 1;
+        const card = document.createElement("div");
+        card.className = "poll-card";
+
+        const candidatesHTML = poll.candidates.map(c => {
+          const v = poll.votes?.[c] || 0;
+          return `
+            <div class="candidate">
+              <strong>${c}</strong>: ${v} / ${totalVotes} votes
+              <div class="bar-container"><div class="bar" style="width: ${(v / totalVotes * 100).toFixed(1)}%"></div></div>
+            </div>`;
+        }).join("");
+
+        card.innerHTML = `
+          <h3>${poll.name}</h3>
+          <p><strong>Organizer:</strong> ${poll.organizer}</p>
+          ${candidatesHTML}
+          <div class="highlight">🏆 Winner: ${poll.winner}</div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    loadResults();
+  </script>
+</body>
+</html>
